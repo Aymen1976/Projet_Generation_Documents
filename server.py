@@ -55,4 +55,6 @@ def generate_document():
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 10000))  # Utilisation du port fourni par Render
+print(app.url_map)
+
     app.run(host="0.0.0.0", port=port, debug=True)  # Assurez-vous que l’indentation est correcte !
