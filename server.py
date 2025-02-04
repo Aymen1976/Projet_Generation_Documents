@@ -54,6 +54,6 @@ def generate_document():
         return jsonify({"error": str(e)}), 500
 
 if __name__ == "__main__":
-    print(app.url_map)  # Ajout du print avant le lancement du serveur
     port = int(os.environ.get("PORT", 10000))  # Utilisation du port fourni par Render
-    app.run(host="0.0.0.0", port=port, debug=True)  # Lancement du serveur
+    print(app.url_map)  # Vérification des routes disponibles
+    app.run(host="0.0.0.0", port=port, debug=True)  # Lancement de l'application
