@@ -45,12 +45,11 @@ def generate_document():
         if not os.path.exists(file_path):
             return jsonify({"error": "Erreur lors de la génération du fichier"}), 500
 
-        response = send_file(file_path, as_attachment=True)
-        os.remove(file_path)
-        return response
+        return send_file(file_path, as_attachment=True)
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
 if __name__ == "__main__":
-    app.run(port=5000, debug=True)
+    port = int(os.environ.get("PORT", 10000))  # Utilisation du port fourni par Render
+    app.run(host="0.0.0.0", port=port, debug=True)  # Assurez-vous que l’indentation est correcte !
