@@ -1,12 +1,24 @@
+from flask import Flask, request, send_file, jsonify
+from fpdf import FPDF
+from docx import Document
+import os
+
+# ✅ Définition correcte de l'application Flask
+app = Flask(__name__)
+
+# ✅ Route pour vérifier que le serveur fonctionne
+@app.route("/", methods=["GET"])
+def home():
+    return jsonify({"message": "Le serveur fonctionne ! Utilisez /generate-document pour créer un fichier."})
+
+# ✅ Route pour générer un document
 @app.route("/generate-document", methods=["POST"])
 def generate_document():
     try:
         if not request.is_json:
             return jsonify({"error": "Requête invalide, envoyez des données JSON"}), 400
-        
-        data = request.json
-        print("Données reçues:", data)  # Ajout pour voir les données reçues
 
+        data = request.json
         doc_type = data.get("type")
         content = data.get("content", "Document généré par le chatbot.")
 
@@ -19,7 +31,7 @@ def generate_document():
             file_path = "document.pdf"
             pdf = FPDF()
             pdf.add_page()
-            pdf.set_font("Helvetica", size=12)
+            pdf.set_font("Helvetica", size=12)  # ✅ Police par défaut
             pdf.multi_cell(200, 10, content)
             pdf.output(file_path)
 
@@ -40,5 +52,12 @@ def generate_document():
         return response
 
     except Exception as e:
-        print("Erreur serveur:", str(e))  # Ajout pour voir l'erreur
         return jsonify({"error": str(e)}), 500
+
+# ✅ Vérification des routes disponibles
+print(app.url_map)
+
+# ✅ Configuration du port
+if __name__ == "__main__":
+    port = int(os.environ.get("PORT", 10000))  # Utilisation du port de Render
+    app.run(host="0.0.0.0", port=port, debug=True)
