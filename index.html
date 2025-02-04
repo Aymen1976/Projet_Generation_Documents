@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Générateur de Documents</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+</head>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.4.2/mammoth.browser.min.js"></script>
+
+<body>
+    <h1>Générateur de Documents</h1>
+    
+    <!-- Input pour sélectionner un fichier PDF ou Word -->
+    <input type="file" id="fileInput" accept=".pdf,.docx">
+    
+    <!-- Affichage du nom du fichier sélectionné -->
+    <p id="fileNameDisplay">Aucun fichier sélectionné</p>
+
+    <!-- Zone d'affichage du contenu (Word converti) -->
+    <div id="output"></div>
+
+    <!-- Zone d'affichage du PDF -->
+    <canvas id="pdfCanvas" style="display: none; border: 1px solid black; margin-top: 10px;"></canvas>
+
+    <!-- Champ pour entrer du texte personnalisé -->
+    <input type="text" id="customText" placeholder="Entrez votre texte ici">
+
+    <!-- Boutons pour générer des fichiers -->
+    <button onclick="generatePDF()">Télécharger PDF</button>
+    <button onclick="generateWord()">Télécharger Word</button>
+
+    <!-- Chargement du script principal -->
+    <script src="script.js" defer></script>
+</body>
+</html>
