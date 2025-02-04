@@ -29,7 +29,7 @@ def generate_document():
             file_path = "document.pdf"
             pdf = FPDF()
             pdf.add_page()
-            pdf.set_font("Arial", size=12)
+            pdf.set_font("Helvetica", size=12)  # Utilisation d'une police par défaut
             pdf.multi_cell(200, 10, content)
             pdf.output(file_path)
 
@@ -45,7 +45,10 @@ def generate_document():
         if not os.path.exists(file_path):
             return jsonify({"error": "Erreur lors de la génération du fichier"}), 500
 
-        return send_file(file_path, as_attachment=True)
+        # Envoi du fichier et suppression après envoi
+        response = send_file(file_path, as_attachment=True)
+        os.remove(file_path)
+        return response
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
