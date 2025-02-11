@@ -1,63 +1,86 @@
-from flask import Flask, request, send_file, jsonify
-from fpdf import FPDF
-from docx import Document
 import os
+import logging
+from flask import Flask, request, jsonify, send_from_directory
+from flask_cors import CORS
 
-# ✅ Définition correcte de l'application Flask
+# Initialisation de l'application Flask
 app = Flask(__name__)
 
-# ✅ Route pour vérifier que le serveur fonctionne
-@app.route("/", methods=["GET"])
+# 🔹 Activer le logging pour Render et le debug
+logging.basicConfig(level=logging.DEBUG)
+
+# 🚀 Vérification que Render charge bien ce fichier
+print("🚀 Le serveur Flask démarre sur Render !")
+
+@app.before_request
+def log_request_info():
+    """Log des requêtes reçues pour faciliter le debug."""
+    logging.info(f"📩 Méthode: {request.method} | URL: {request.url}")
+    logging.info(f"📩 Headers: {request.headers}")
+    logging.info(f"📩 Body: {request.get_data().decode('utf-8', errors='ignore')}")  # Affichage brut du body
+
+CORS(app)  # Activer CORS pour autoriser les requêtes externes
+
+# 📁 Dossier pour stocker les documents générés
+UPLOAD_FOLDER = 'generated_documents'
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+
+# ✅ Affichage de toutes les routes disponibles pour vérifier le bon fonctionnement sur Render
+print("📌 Routes enregistrées sur le serveur Flask :")
+for rule in app.url_map.iter_rules():
+    print(f"{rule.endpoint} -> {rule.rule} -> {rule.methods}")
+
+@app.route('/', methods=['GET'])
 def home():
+    """Endpoint de test pour vérifier si le serveur est actif."""
     return jsonify({"message": "Le serveur fonctionne ! Utilisez /generate-document pour créer un fichier."})
 
-# ✅ Route pour générer un document
-@app.route("/generate-document", methods=["POST"])
+@app.route('/generate-document', methods=['POST', 'OPTIONS'])
 def generate_document():
+    """Endpoint pour générer un document texte à partir d'un JSON."""
+    if request.method == 'OPTIONS':
+        return '', 200  # Réponse rapide pour CORS
+
     try:
-        if not request.is_json:
-            return jsonify({"error": "Requête invalide, envoyez des données JSON"}), 400
+        # 🔹 Ajout de logs pour voir ce que Postman envoie
+        logging.info("📩 Requête reçue : %s", request.data.decode('utf-8', errors='ignore'))
+        logging.info("📩 Headers reçus : %s", request.headers)
 
-        data = request.json
-        doc_type = data.get("type")
-        content = data.get("content", "Document généré par le chatbot.")
+        # 🔹 Vérifie si la requête contient bien du JSON
+        data = request.get_json(force=True, silent=True)  # Force JSON parsing et ignore erreurs silencieusement
 
-        if not doc_type or not isinstance(content, str):
-            return jsonify({"error": "Paramètres invalides"}), 400
+        if data is None:
+            logging.error("🚨 Erreur : JSON mal formé ou manquant")
+            return jsonify({"error": "Le contenu doit être au format JSON"}), 400
 
-        file_path = ""
+        # Vérifie si "content" est bien présent
+        if "content" not in data:
+            logging.error("🚨 Erreur : Champ 'content' manquant")
+            return jsonify({"error": "Champ 'content' manquant"}), 400
 
-        if doc_type.lower() == "pdf":
-            file_path = "document.pdf"
-            pdf = FPDF()
-            pdf.add_page()
-            pdf.set_font("Helvetica", size=12)  # ✅ Police par défaut
-            pdf.multi_cell(200, 10, content)
-            pdf.output(file_path)
+        # Création du fichier texte avec le contenu reçu
+        filename = "document_test.txt"
+        filepath = os.path.join(UPLOAD_FOLDER, filename)
 
-        elif doc_type.lower() == "word":
-            file_path = "document.docx"
-            doc = Document()
-            doc.add_paragraph(content)
-            doc.save(file_path)
+        with open(filepath, 'w', encoding='utf-8') as f:
+            f.write(data["content"])
 
-        else:
-            return jsonify({"error": "Type de document non supporté, utilisez 'pdf' ou 'word'"}), 400
-
-        if not os.path.exists(file_path):
-            return jsonify({"error": "Erreur lors de la génération du fichier"}), 500
-
-        response = send_file(file_path, as_attachment=True)
-        os.remove(file_path)
-        return response
+        logging.info(f"✅ Document enregistré avec succès sous {filename}")
+        return jsonify({
+            "message": "Document généré avec succès",
+            "filename": filename
+        }), 200
 
     except Exception as e:
+        logging.error(f"🚨 Exception : {e}")
         return jsonify({"error": str(e)}), 500
 
-# ✅ Vérification des routes disponibles
-print(app.url_map)
+@app.route('/static/<filename>', methods=['GET'])
+def serve_document(filename):
+    """Permet de télécharger un fichier généré."""
+    return send_from_directory(UPLOAD_FOLDER, filename)
 
-# ✅ Configuration du port
-if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 10000))  # Utilisation du port de Render
-    app.run(host="0.0.0.0", port=port, debug=True)
+# Configuration pour Render
+if __name__ == '__main__':
+    port = int(os.environ.get("PORT", 10000))  # Prendre le port de Render
+    app.run(host='0.0.0.0', port=port, debug=True)
